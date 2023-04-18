@@ -1,0 +1,4 @@
+.DS_Store
+venv-api-file-system
+.env
+__pycache__
