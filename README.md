@@ -7,7 +7,11 @@ execute tests, get language-specific code summaries, and write language-specific
 code.
 
 It is designed to be usable as a ChatGPT plugin, allowing you do leverage the
-power of ChatGPT to edit your repo from within ChatGPT and leverage its power.
+power of ChatGPT to edit your repo from within ChatGPT.
+
+WARNING: This is in early stages of development. It provides the LLM with read
+and write access to your repo, so use at your own risk. Be sure to track your
+repo with version control so you can revert unwanted changes from the LLM.
 
 ## Features
 
@@ -32,33 +36,22 @@ move files or directories, and get the file structure of your repository.
 
 To get started with LLM Repo Assistant, follow these steps:
 
-1. Install the LLM Repo Assistant plugin according to the provided installation instructions.
-2. Ensure that your code repository is set up with the necessary file structure
-and test files.
-3. Use the API endpoints provided by LLM Repo Assistant to interact with your code repository and perform various operations.
+1. Clone the repo
+2. Follow the `.env-template` example to create an `.env` file in the top
+directory of this repo to define `REPO_ROOT` which points to the top level directory
+of the repo you want the API to be able to read / edit.
+3. Add an `.llmignore` file to the `REPO_ROOT` directory - this tells the API about
+files in your repo that you want ignored by the LLM.
+4. Run the API with `source start.sh`. The API should then be running on `localhost:8000`
+5. View and test the API by visiting `localhost:8000/docs`
 
-## API Endpoints
+## Adding ChatGPT plugin
 
-LLM Repo Assistant provides a comprehensive set of API endpoints for interacting with your code repository. Detailed documentation for each endpoint, including input parameters and expected responses, can be found in the API documentation.
+To add a ChatGPT plugin, follow these steps:
 
-## Use Cases
+1. Gain access to OpenAPI ChatGPT plugin development
+2. Run LLM Repo Assistant locally using the instructions earlier
+3. Go to `Plugin store` -> `Develop your own plugin`, enter `localhost:8000`,
+and click `Find manifest file`
+4. The plugin should now be available to use by ChatGPT
 
-LLM Repo Assistant is designed to assist developers in a variety of tasks, including:
-
-- Code review and refactoring
-- Automated testing and continuous integration
-- Code generation and templating
-- Code documentation and summarization
-- Code navigation and search
-
-## Contributing
-
-We welcome contributions to LLM Repo Assistant! If you have a feature request, bug report, or want to contribute code, please refer to the CONTRIBUTING.md file for guidelines on how to contribute.
-
-## License
-
-LLM Repo Assistant is released under the [LICENSE NAME]. See the LICENSE file for more information.
-
-## Contact
-
-For any questions, issues, or feedback, please reach out to us at [CONTACT INFORMATION].
