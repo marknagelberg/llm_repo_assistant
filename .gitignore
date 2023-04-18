@@ -1,4 +1,4 @@
 .DS_Store
-venv-api-file-system
+venv*
 .env
 __pycache__
