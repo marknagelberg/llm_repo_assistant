@@ -6,6 +6,8 @@ from fastapi import HTTPException, APIRouter
 
 from src.schemas import TestRunRequest
 from src.core.config import settings
+from src.utils import get_git_diff
+
 
 
 router = APIRouter()
@@ -50,4 +52,17 @@ async def run_tests_endpoint(test_framework: TestFramework, test_run_request: Te
     test_output = run_tests(test_command, test_run_request.test_name)
     return {"status": "success", "test_output": test_output}
 
+
+
+@router.get("/git_diff")
+async def git_diff():
+    """
+    Returns `git diff` for the repo (changes since last commit).
+    """
+    try:
+        diff = get_git_diff(settings.REPO_ROOT)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {"diff": diff}
 

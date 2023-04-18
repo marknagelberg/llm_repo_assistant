@@ -1,4 +1,5 @@
 import os
+import subprocess
 import pathlib
 from pathlib import Path
 import ast
@@ -85,4 +86,39 @@ def is_llmignored(file_path: str) -> bool:
         if path_obj.match(pattern):
             return True
     return False
+
+
+def is_git_repository(directory: str) -> bool:
+    try:
+        subprocess.run(
+            ["git", "-C", directory, "rev-parse", "--is-inside-work-tree"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def get_git_diff(directory: str) -> str:
+    if not is_git_repository(directory):
+        raise ValueError("The directory is not a git repository")
+
+    # Check if there are any commits
+    check_commits = subprocess.run(["git", "-C", directory, "rev-parse", "--quiet", "--verify", "HEAD"], 
+                                   capture_output=True, 
+                                   text=True)
+
+    if check_commits.returncode != 0:
+        # No commits, so return an empty diff
+        return ""
+
+    result = subprocess.run(
+        ["git", "-C", directory, "diff", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
 
