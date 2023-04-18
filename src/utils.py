@@ -8,8 +8,10 @@ from fastapi import HTTPException
 
 from src.core.config import settings
 
+
 def sanitize_path(path: str) -> str:
     return path.lstrip('/')
+
 
 def get_full_path(path: str) -> str:
     sanitized_path = sanitize_path(path)
@@ -61,6 +63,17 @@ def extract_python_summary(file_content: str) -> List[Dict[str, Any]]:
                     class_summary["methods"].append(method_summary)
 
             summary.append(class_summary)
+
+        else:
+            # Top-level statements
+            source_code = ast.unparse(node).strip()
+
+            if source_code:
+                statement_summary = {
+                    "type": "statement",
+                    "source": source_code,
+                }
+                summary.append(statement_summary)
 
     return summary
 
