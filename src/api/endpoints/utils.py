@@ -9,6 +9,7 @@ from fnmatch import fnmatch
 from src.schemas import MoveRequest
 from src.utils import get_full_path
 from src.core.config import settings
+from src.utils import load_llmignore_patterns, is_llmignored
 
 router = APIRouter()
 
@@ -16,9 +17,11 @@ def search_files(query: str, root_dir: FilePath):
     matches = []
     for root, dirnames, filenames in os.walk(root_dir):
         for filename in fnmatch.filter(filenames, f"*{query}*"):
-            matches.append(os.path.join(root, filename))
+            if not is_llmignored(os.path.join(root, filename)):
+                matches.append(os.path.join(root, filename))
         for dirname in fnmatch.filter(dirnames, f"*{query}*"):
-            matches.append(os.path.join(root, dirname))
+            if not is_llmignored(os.path.join(root, dirname)):
+                matches.append(os.path.join(root, dirname))
     return matches
 
 
@@ -31,40 +34,25 @@ async def search_files_and_directories(q: str = Query(..., min_length=1)):
 
 @router.post("/move")
 async def move_file_or_directory(move_request: MoveRequest):
-    try:
-        src_path = FilePath(move_request.src_path)
-        dest_path = FilePath(move_request.dest_path)
-        if src_path.exists():
-            shutil.move(src_path, dest_path)
-            return {"message": "Moved successfully"}
-        else:
-            raise HTTPException(status_code=404, detail="Source not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    src_path = FilePath(move_request.src_path)
+    dest_path = FilePath(move_request.dest_path)
+    if is_llmignored(str(src_path)):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+    if src_path.exists():
+        shutil.move(src_path, dest_path)
+        return {"message": "Moved successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Source not found")
 
 
-def load_llmignore_patterns(llmignore_path: str) -> List[str]:
-    if os.path.exists(llmignore_path):
-        with open(llmignore_path, "r") as f:
-            return [line.strip() for line in f.readlines() if line.strip() and not line.startswith("#")]
-    return []
-
-
-def is_llmignored(file_path: str, llmignore_patterns: List[str]) -> bool:
-    for pattern in llmignore_patterns:
-        path_obj = FilePath(file_path)
-        if path_obj.match(pattern):
-            return True
-    return False
-
-def get_directory_structure(path: str, llmignore_patterns: List[str] = []) -> Dict[str, Any]:
+def get_directory_structure(path: str) -> Dict[str, Any]:
     item = {
         "name": os.path.basename(path),
         "path": path[len(str(settings.REPO_ROOT)):], # Remove the repo root from the path
         "type": "file" if os.path.isfile(path) else "directory"
     }
 
-    if is_llmignored(item["path"], llmignore_patterns):
+    if is_llmignored(item["path"]):
             return None
 
     if os.path.isfile(path):
@@ -75,7 +63,7 @@ def get_directory_structure(path: str, llmignore_patterns: List[str] = []) -> Di
         }
     else:
         children = [
-            get_directory_structure(os.path.join(path, child), llmignore_patterns)
+            get_directory_structure(os.path.join(path, child))
             for child in os.listdir(path)
         ]
         item["children"] = [child for child in children if child is not None]
@@ -93,11 +81,6 @@ async def get_file_structure(dir_path: str):
     dir_path = get_full_path(dir_path)
     if not os.path.exists(dir_path):
         raise HTTPException(status_code=404, detail="Directory not found")
-    llmignore_path = os.path.join(settings.REPO_ROOT, '.llmignore')
-    if not os.path.exists(llmignore_path):
-        raise HTTPException(status_code=404, detail=".llmignore file not found")
-    llmignore_patterns = []
-    llmignore_patterns = load_llmignore_patterns(llmignore_path)
-    structure = get_directory_structure(dir_path, llmignore_patterns)
+    structure = get_directory_structure(dir_path)
     return structure
 

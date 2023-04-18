@@ -8,6 +8,7 @@ from typing import Optional
 from src.schemas import UpdateFunctionDefinitionRequest, UpdateClassDefinitionRequest, NewFunctionDefinitionRequest, NewClassDefinitionRequest
 from src.utils import extract_file_summary, get_full_path
 from src.core.config import settings
+from src.utils import is_llmignored
 
 #TODO:
 # - Endpoint to run test suite
@@ -29,6 +30,8 @@ async def get_summary(file_path: str, language: Language = Query(..., descriptio
     to understand what it does.
     """
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -68,6 +71,8 @@ async def get_function_definition(file_path: str,
                                   function_name: str, 
                                   language: Language):
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -105,6 +110,8 @@ def extract_python_class_definition(file_content: str, class_name: str):
 @router.get("/class_definition/{language}/{file_path:path}/{class_name}")
 async def get_class_definition(language: Language, file_path: str, class_name: str):
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -178,6 +185,8 @@ async def update_function_definition(
     If no new function definition is provided, the function is deleted.
     """
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -252,6 +261,8 @@ async def update_class_definition(
     If no new class definition is provided, the class is deleted.
     """
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -294,6 +305,8 @@ async def insert_new_function_definition(
     new_function_request: NewFunctionDefinitionRequest,
 ):
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -334,6 +347,8 @@ async def create_class_definition(
     new_class_request: NewClassDefinitionRequest,
 ):
     full_file_path = get_full_path(file_path)
+    if is_llmignored(full_file_path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
         raise HTTPException(status_code=404, detail="File not found")
 

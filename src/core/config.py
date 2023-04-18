@@ -1,7 +1,8 @@
+import os
 import secrets
-from typing import List, Union
+from typing import List, Union, Optional
 
-from pydantic import AnyHttpUrl, BaseSettings, validator, DirectoryPath
+from pydantic import AnyHttpUrl, BaseSettings, validator, DirectoryPath, FilePath
 
 
 class Settings(BaseSettings):
@@ -22,9 +23,11 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    PROJECT_NAME: str = "FastaGi"
+    PROJECT_NAME: str = "LLM Repo Assistant"
 
     REPO_ROOT: DirectoryPath
+
+    LLMIGNORE_PATH: Optional[FilePath] = None
 
     class Config:
         env_file = ".env"
@@ -32,3 +35,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+settings.LLMIGNORE_PATH = os.path.join(settings.REPO_ROOT, ".llmignore")

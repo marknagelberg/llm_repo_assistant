@@ -4,7 +4,7 @@ import os
 from typing import Optional
 from src.schemas import CreateFileRequest, UpdateEntireFileRequest, UpdateFileLineNumberRequest
 from src.core.config import settings
-from src.utils import get_full_path
+from src.utils import get_full_path, is_llmignored
 
 router = APIRouter()
 
@@ -13,12 +13,14 @@ router = APIRouter()
 async def read_file(file_path: str):
     path = get_full_path(file_path)
 
-    if not path.exists():
+    if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
+    if is_llmignored(path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
 
-    if path.is_file():
+    if os.path.isfile(path):
         try:
-            with path.open("r") as file:
+            with open(path, "r") as file:
                 content = file.read()
             return {"content": content}
         except PermissionError:
@@ -32,6 +34,8 @@ async def read_file(file_path: str):
 @router.post("/")
 async def create_file(file_request: CreateFileRequest):
     target_path = file_request.path + '/' + file_request.file_name
+    if is_llmignored(file_request.file_name):
+        raise HTTPException(status_code=404, detail="Cannot create file that is ignored in `.llmignore`")
     if file_request.create_directories and not os.path.exists(file_request.path):
         path = FilePath(target_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -51,6 +55,8 @@ async def update_entire_file(file_path: str, update_request: UpdateEntireFileReq
 
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
+    if is_llmignored(path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
 
     if os.path.isfile(path):
         try:
@@ -76,6 +82,8 @@ async def edit_file_by_line_number(file_path: str, edit_request: UpdateFileLineN
 
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
+    if is_llmignored(path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
 
     if os.path.isfile(path):
         try:
@@ -109,6 +117,8 @@ async def delete_file(file_path: str):
 
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
+    if is_llmignored(path):
+        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if os.path.isfile(path):
         os.remove(path)
         return {"message": "File deleted successfully"}

@@ -1,4 +1,6 @@
+import os
 import pathlib
+from pathlib import Path
 import ast
 from typing import List, Dict, Any
 from fastapi import HTTPException
@@ -67,4 +69,20 @@ def extract_file_summary(file_content: str, language: str) -> List[Dict[str, Any
         return extract_python_summary(file_content)
     else:
         raise ValueError(f"Language {language} not supported")
+
+
+def load_llmignore_patterns() -> List[str]:
+    if os.path.exists(settings.LLMIGNORE_PATH):
+        with open(settings.LLMIGNORE_PATH, "r") as f:
+            return [line.strip() for line in f.readlines() if line.strip() and not line.startswith("#")]
+    return []
+
+
+def is_llmignored(file_path: str) -> bool:
+    llmignore_patterns = load_llmignore_patterns()
+    for pattern in llmignore_patterns:
+        path_obj = Path(file_path)
+        if path_obj.match(pattern):
+            return True
+    return False
 
