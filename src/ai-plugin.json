@@ -1,7 +1,7 @@
 {
   "schema_version": "v1",
-  "name_for_human": "File System API for Code Repo",
-  "name_for_model": "RepoFileSystemAPI",
+  "name_for_human": "LLM Code Repo Assistant",
+  "name_for_model": "LLMCodeRepoAssistant",
   "description_for_human": "Plugin for performing read, write, and execute filesystem operations on a user's local code repo.",
   "description_for_model": "Plugin for performing read and write filesystem operations on a code repo, including functionality specifically for reading / writing code, as well as limited operations to execute code / tests to enable development.",
   "auth": {

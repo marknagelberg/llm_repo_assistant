@@ -15,7 +15,7 @@ def sanitize_path(path: str) -> str:
 
 def get_full_path(path: str) -> str:
     sanitized_path = sanitize_path(path)
-    full_path = pathlib.Path(settings.REPO_ROOT / sanitized_path).resolve()
+    full_path = os.path.join(settings.REPO_ROOT, sanitized_path)
 
     if not str(full_path).startswith(str(settings.REPO_ROOT)):
         raise HTTPException(status_code=400, detail="Invalid file path")

@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "LLM Repo Assistant"
 
-    REPO_ROOT: DirectoryPath
+    REPO_ROOT: str = "/repo"
 
     LLMIGNORE_PATH: Optional[FilePath] = None
 
