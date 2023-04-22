@@ -23,8 +23,8 @@ class Language(str, Enum):
     #javascript = "javascript"
 
 
-@router.get("/summary/{file_path:path}")
-async def get_summary(file_path: str, language: Language = Query(..., description="Programming language of the file")):
+@router.get("/summary/{language}/{file_path:path}")
+async def get_summary(file_path: str, language: Language):
     """
     Retrieve high level class and function signatures of a programming file
     to understand what it does.
