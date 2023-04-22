@@ -5,17 +5,17 @@ import os
 from typing import Optional
 from src.schemas import CreateFileRequest, UpdateEntireFileRequest, UpdateFileLineNumberRequest
 from src.core.config import settings
-from src.utils import get_full_path, is_llmignored
+from src.utils import get_filesystem_path, is_llmignored
 
 router = APIRouter()
 
 
 @router.get("/{file_path:path}")
 async def read_file(file_path: str):
-    path = get_full_path(file_path)
+    path = get_filesystem_path(file_path)
 
     if is_llmignored(path):
-        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        raise HTTPException(status_code=403, detail="File is ignored in `.llmignore`")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -36,7 +36,7 @@ async def read_file(file_path: str):
 async def create_file(file_request: CreateFileRequest):
     target_path = file_request.path + '/' + file_request.file_name
     if is_llmignored(file_request.file_name):
-        raise HTTPException(status_code=404, detail="Cannot create file that is ignored in `.llmignore`")
+        raise HTTPException(status_code=403, detail="Cannot create file that is ignored in `.llmignore`")
     if file_request.create_directories and not os.path.exists(file_request.path):
         path = FilePath(target_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -52,12 +52,12 @@ async def create_file(file_request: CreateFileRequest):
 
 @router.put("/edit_entire_file/{file_path:path}")
 async def update_entire_file(file_path: str, update_request: UpdateEntireFileRequest):
-    path = get_full_path(file_path)
+    path = get_filesystem_path(file_path)
 
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
     if is_llmignored(path):
-        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        raise HTTPException(status_code=403, detail="File is ignored in `.llmignore`")
 
     if os.path.isfile(path):
         try:
@@ -79,12 +79,12 @@ async def edit_file_by_line_number(file_path: str, edit_request: UpdateFileLineN
     If no end_line is specified, it will only edit the start_line.
     '''
 
-    path = get_full_path(file_path)
+    path = get_filesystem_path(file_path)
 
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
     if is_llmignored(path):
-        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        raise HTTPException(status_code=403, detail="File is ignored in `.llmignore`")
 
     if os.path.isfile(path):
         try:
@@ -114,12 +114,12 @@ async def edit_file_by_line_number(file_path: str, edit_request: UpdateFileLineN
 
 @router.delete("/{file_path:path}")
 async def delete_file(file_path: str):
-    path = get_full_path(file_path)
+    path = get_filesystem_path(file_path)
 
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="File not found")
     if is_llmignored(path):
-        raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        raise HTTPException(status_code=403, detail="File is ignored in `.llmignore`")
     if os.path.isfile(path):
         os.remove(path)
         return {"message": "File deleted successfully"}

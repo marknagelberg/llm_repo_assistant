@@ -7,7 +7,7 @@ from fastapi import HTTPException, APIRouter
 
 from src.schemas import TestRunRequest
 from src.core.config import settings
-from src.utils import get_full_path
+from src.utils import get_filesystem_path
 
 
 router = APIRouter()
@@ -47,7 +47,7 @@ async def run_tests_endpoint(test_framework: TestFramework, test_run_request: Te
 
     test_file_path = ""
     if test_run_request.test_file_path:
-        test_file_path = get_full_path(test_run_request.test_file_path)
+        test_file_path = get_filesystem_path(test_run_request.test_file_path)
 
     if test_framework.lower() == "pytest":
         test_command = ["pytest"]

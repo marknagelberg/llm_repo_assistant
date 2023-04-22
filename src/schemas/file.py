@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, validator, FilePath, DirectoryPath
 import pathlib
 
-from src.utils import get_full_path
+from src.utils import get_filesystem_path
 
 
 class CreateFileRequest(BaseModel):
@@ -25,7 +25,7 @@ class CreateFileRequest(BaseModel):
     @validator('path')
     def validate_path(cls, path: str) -> pathlib.Path:
         # Remove any leading slashes and ensure it's a relative path
-        sanitized_path = get_full_path(path)
+        sanitized_path = get_filesystem_path(path)
 
         # Check if the sanitized_path contains only valid characters
         if not re.match(r'^[\w\-./ ]*$', sanitized_path):

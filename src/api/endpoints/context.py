@@ -5,7 +5,7 @@ import os
 import shutil
 from typing import Any, Dict
 
-from src.utils import get_full_path
+from src.utils import get_filesystem_path
 from src.core.config import settings
 from src.utils import is_llmignored, get_git_diff
 
@@ -64,7 +64,7 @@ async def get_file_structure(dir_path: str):
     and any file matching `.llmignore` patterns. `.llmignore` must be in the 
     root directory of repo and follow same structure as `.gitignore`.
     """
-    dir_path = get_full_path(dir_path)
+    dir_path = get_filesystem_path(dir_path)
     if not os.path.exists(dir_path):
         raise HTTPException(status_code=404, detail="Directory not found")
     structure = get_directory_structure(dir_path)

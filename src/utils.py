@@ -13,14 +13,31 @@ def sanitize_path(path: str) -> str:
     return path.lstrip('/')
 
 
-def get_full_path(path: str) -> str:
-    sanitized_path = sanitize_path(path)
+def get_filesystem_path(endpoint_path: str) -> str:
+    """
+    Given a target repo path specified by an endpoint, return the actual
+    path on the filesystem.
+    """
+    sanitized_path = sanitize_path(endpoint_path)
     full_path = os.path.join(settings.REPO_ROOT, sanitized_path)
 
     if not str(full_path).startswith(str(settings.REPO_ROOT)):
         raise HTTPException(status_code=400, detail="Invalid file path")
     
     return str(full_path)
+
+def get_endpoint_path(file_path: str) -> str:
+    """
+    Given a file path to target repo, return the path that should be used for the endpoint.
+    """
+    if not str(file_path).startswith(str(settings.REPO_ROOT)):
+        raise HTTPException(status_code=400, 
+                            detail="Invalid file path - must start with repo root {}".format(str(settings.REPO_ROOT)))
+    # Remove settings.REPO_ROOT from the beginning of file_path
+    endpoint_path = file_path[len(settings.REPO_ROOT):]
+    # Remove leading slash
+    endpoint_path = endpoint_path.lstrip("/")
+    return endpoint_path
 
 
 def extract_python_summary(file_content: str) -> List[Dict[str, Any]]:

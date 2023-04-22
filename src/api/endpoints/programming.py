@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Query, APIRouter, Body
 from typing import Optional
 
 from src.schemas import UpdateFunctionDefinitionRequest, UpdateClassDefinitionRequest, NewFunctionDefinitionRequest, NewClassDefinitionRequest
-from src.utils import extract_file_summary, get_full_path
+from src.utils import extract_file_summary, get_filesystem_path
 from src.core.config import settings
 from src.utils import is_llmignored
 
@@ -29,7 +29,7 @@ async def get_summary(file_path: str, language: Language = Query(..., descriptio
     Retrieve high level class and function signatures of a programming file
     to understand what it does.
     """
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
@@ -70,7 +70,7 @@ def extract_python_function_definition(file_content: str, function_name: str):
 async def get_function_definition(file_path: str, 
                                   function_name: str, 
                                   language: Language):
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
@@ -109,7 +109,7 @@ def extract_python_class_definition(file_content: str, class_name: str):
 
 @router.get("/class_definition/{language}/{file_path:path}/{class_name}")
 async def get_class_definition(language: Language, file_path: str, class_name: str):
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
@@ -184,7 +184,7 @@ async def update_function_definition(
     according to the provided `new_function_definition`, including the function signature.
     If no new function definition is provided, the function is deleted.
     """
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
@@ -260,7 +260,7 @@ async def update_class_definition(
     according to the provided `new_class_definition`, including the class signature.
     If no new class definition is provided, the class is deleted.
     """
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
@@ -304,7 +304,7 @@ async def insert_new_function_definition(
     file_path: str,
     new_function_request: NewFunctionDefinitionRequest,
 ):
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):
@@ -346,7 +346,7 @@ async def create_class_definition(
     file_path: str,
     new_class_request: NewClassDefinitionRequest,
 ):
-    full_file_path = get_full_path(file_path)
+    full_file_path = get_filesystem_path(file_path)
     if is_llmignored(full_file_path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
     if not os.path.isfile(full_file_path):

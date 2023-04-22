@@ -4,25 +4,25 @@ import shutil
 import pytest
 from fastapi.testclient import TestClient
 from src.main import app
-from src.utils import get_full_path
+from src.utils import get_filesystem_path, get_endpoint_path
 from src.core.config import settings
 import tempfile
 
 client = TestClient(app)
 
 # Define a fixture for creating and cleaning up temporary files
-@pytest.fixture
+@pytest.fixture(scope='function')
 def temp_file():
     # Create a temporary file in target repo top-level directory
     with tempfile.NamedTemporaryFile(mode='w', dir=settings.REPO_ROOT, delete=False) as temp_file:
         temp_file.write('Temporary file content')
         temp_file_path = temp_file.name
-    yield os.path.basename(temp_file.name)  # Provide the name of the test file which is same as path to the file since it's at the top-level
+    yield temp_file_path
     # Teardown logic: remove the temporary file 
     os.unlink(temp_file_path)
 
 # Define a fixture for handling .llmignore file
-@pytest.fixture
+@pytest.fixture(scope='function')
 def llmignore_handler():
     # Check if .llmignore already exists and back it up if it does
     llmignore_exists = os.path.exists('.llmignore')
@@ -41,8 +41,9 @@ def llmignore_handler():
 def test_read_file_success(temp_file):
     # Use the fixture to get the path to the temporary file
     test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
     # Use the correct URL path to access the endpoint
-    response = client.get(f'/api/v1/files/{test_file_path}')
+    response = client.get(f'/api/v1/files/{test_endpoint_path}')
     assert response.status_code == 200
     assert response.json() == {'content': 'Temporary file content'}
 
@@ -53,25 +54,27 @@ def test_read_file_ignored_in_llmignore(temp_file, llmignore_handler):
     test_file_path = temp_file
     # Get filename of temp_file
     filename = os.path.basename(test_file_path)
+    test_endpoint_path = get_endpoint_path(test_file_path)
 
     # Create a .llmignore file that ignores the temporary file
     with open('.llmignore', 'w') as llmignore_file:
         llmignore_file.write(filename)
 
     # Use the correct URL path to access the endpoint
-    response = client.get(f'/api/v1/files/{test_file_path}')
+    response = client.get(f'/api/v1/files/{test_endpoint_path}')
 
     # Assert that the response status code is 404 (Not Found)
     # because the file is ignored in .llmignore
-    assert response.status_code == 404
+    assert response.status_code == 403
     assert response.json() == {'detail': 'File is ignored in `.llmignore`'}
 
 def test_read_directory_instead_of_file(temp_file):
     # Use the fixture to get the path to the temporary file
     test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
 
     # Get the parent directory of the temporary file
-    test_dir_path = os.path.dirname(test_file_path)
+    test_dir_path = os.path.dirname(test_endpoint_path)
 
     # Use the correct URL path to access the endpoint
     response = client.get(f'/api/v1/files/{test_dir_path}')
@@ -93,23 +96,44 @@ def test_create_file_success(temp_file):
     assert response.json() == {'message': 'File created successfully'}
 
     # Assert that the new file exists and contains the expected content
-    with open('new_file.txt', 'r') as new_file:
+    with open(get_filesystem_path('new_file.txt'), 'r') as new_file:
         assert new_file.read() == file_content
 
     # Teardown logic: remove the new file
-    os.unlink('new_file.txt')
+    os.unlink(get_filesystem_path('new_file.txt'))
 
 def test_create_file_already_exists(temp_file):
     # Use the fixture to get the path to the temporary file
     test_file_path = temp_file
+    test_endpoint_file_path = get_endpoint_path(test_file_path)
 
     # Define the content to be written to the new file
     file_content = 'New file content'
 
     # Use the correct URL path to access the endpoint
-    response = client.post('/api/v1/files/', json={'file_name': test_file_path, 'path': '', 'content': file_content})
+    response = client.post('/api/v1/files/', json={'file_name': test_endpoint_file_path, 'path': '', 'content': file_content})
 
     # Assert that the response status code is 409 (Conflict)
     # because the file already exists
     assert response.status_code == 409
     assert response.json() == {'detail': 'File already exists'}
+
+def test_create_file_ignored_in_llmignore(temp_file, llmignore_handler):
+    new_file_name = 'test_create_file.txt'
+
+    # Create a .llmignore file that ignores the temporary file
+    with open(get_filesystem_path('.llmignore'), 'w') as llmignore_file:
+        llmignore_file.write(new_file_name)
+
+    # Define the content to be written to the new file
+    file_content = 'Create new file content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.post('/api/v1/files/', json={'file_name': new_file_name, 'path': '', 'content': file_content})
+
+    # Assert that the response status code is 403 (Forbidden)
+    # because the file is ignored in .llmignore
+    assert response.status_code == 403
+    assert response.json() == {'detail': 'Cannot create file that is ignored in `.llmignore`'}
+    if os.path.exists(get_filesystem_path(new_file_name)):
+        os.unlink(get_filesystem_path(new_file_name))
