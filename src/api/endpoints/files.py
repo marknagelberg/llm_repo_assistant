@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Path
+from fastapi import FastAPI, APIRouter, HTTPException, Path, status
+from fastapi.responses import JSONResponse
 from pathlib import Path as FilePath
 import os
 from typing import Optional
@@ -44,7 +45,7 @@ async def create_file(file_request: CreateFileRequest):
     if not os.path.exists(target_path):
         with open(target_path, "w") as file:
             file.write(file_request.content)
-        return {"message": "File created successfully"}
+        return JSONResponse(content={"message": "File created successfully"}, status_code=status.HTTP_201_CREATED)
     else:
         raise HTTPException(status_code=409, detail="File already exists")
 
