@@ -8,7 +8,7 @@ from src.utils import is_llmignored
 router = APIRouter()
 
 
-@router.get("/directories/{dir_path:path}")
+@router.get("/{dir_path:path}")
 async def list_directory_contents(dir_path: str):
     target_path = FilePath(dir_path)
     if is_llmignored(str(target_path)):
@@ -20,7 +20,7 @@ async def list_directory_contents(dir_path: str):
         raise HTTPException(status_code=404, detail="Directory not found")
 
 
-@router.post("/directories")
+@router.post("/")
 async def create_directory(directory_request: DirectoryRequest):
     target_path = FilePath(directory_request.path) / directory_request.dir_name
     if is_llmignored(str(target_path)):
@@ -32,7 +32,7 @@ async def create_directory(directory_request: DirectoryRequest):
         raise HTTPException(status_code=409, detail="Directory already exists")
 
 
-@router.delete("/directories/{dir_path:path}")
+@router.delete("/{dir_path:path}")
 async def delete_directory(dir_path: str):
     target_path = FilePath(dir_path)
     if is_llmignored(str(target_path)):

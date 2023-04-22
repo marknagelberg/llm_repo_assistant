@@ -36,14 +36,19 @@ move files or directories, and get the file structure of your repository.
 
 To get started with LLM Repo Assistant, follow these steps:
 
-1. Clone the repo
-2. Follow the `.env-template` example to create an `.env` file in the top
-directory of this repo to define `REPO_ROOT` which points to the top level directory
-of the repo you want the API to be able to read / edit.
-3. Add an `.llmignore` file to the `REPO_ROOT` directory - this tells the API about
-files in your repo that you want ignored by the LLM.
-4. Run the API with `source start.sh`. The API should then be running on `localhost:8000`
-5. View and test the API by visiting `localhost:8000/docs`
+1. Install Docker
+2. Clone the repo
+3. Add an `.llmignore` file to the root directory of your repository - this tells
+LLM Repo Assistant about files in your repo that you want ignored by the LLM.
+4. Navigate to the `llm_repo_assistant` cloned repository and build the
+Docker image to run LLM Repo Assistant with `docker build -t llm_repo_assistant .`
+5. Run LLM Repo Assistant locally in a docker container with the following command:
+`docker run --rm -v "/path/to/cloned/repo/llm_repo_assistant:/app" -v "/path/to/your/code/repo:/repo" -p 8000:8000 --name llm_repo_assistant llm_repo_assistant`
+6. View and test the API endpoints by visiting `localhost:8000/docs`
+7. Install the ChatGPT plugin by going to `Plugin store -> Develop your own plugin`.
+Type in `localhost:8000` and click `Find manifest file`. The plugin should now be installed
+and ready to use.
+
 
 ## Adding ChatGPT plugin
 

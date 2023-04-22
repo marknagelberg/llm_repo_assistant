@@ -13,10 +13,10 @@ router = APIRouter()
 async def read_file(file_path: str):
     path = get_full_path(file_path)
 
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="File not found")
     if is_llmignored(path):
         raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
 
     if os.path.isfile(path):
         try:

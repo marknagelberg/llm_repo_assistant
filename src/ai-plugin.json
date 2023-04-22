@@ -1,9 +1,9 @@
 {
   "schema_version": "v1",
-  "name_for_human": "LLM Code Repo Assistant",
-  "name_for_model": "LLMCodeRepoAssistant",
-  "description_for_human": "Plugin for performing read, write, and execute filesystem operations on a user's local code repo.",
-  "description_for_model": "Plugin for performing read and write filesystem operations on a code repo, including functionality specifically for reading / writing code, as well as limited operations to execute code / tests to enable development.",
+  "name_for_human": "LLM Repo Assistant",
+  "name_for_model": "LLMRepoAssistant",
+  "description_for_human": "Plugin for ChatGPT to help build your local code repo.",
+  "description_for_model": "Plugin providing an API to work on the user's code repo. Before asking user for more details, try to get all context you need via the context endpoints or summary-related endpoints. If possible, satisfy requests using precise endpoints then expand to broader endpoints if deemed necessary (e.g. read a function first then a whole file if it's not enough info). User should be using git version control and should commit before providing tasks to you, so `git diff` represents changes you have made so far - however, this is not guaranteed as the user may have forgotten. Implement your solution step-by-step and ask the user permission for making write operations to the repo (unless they specifically instruct you to proceed with a batch of writes).",
   "auth": {
     "type": "none"
   },
