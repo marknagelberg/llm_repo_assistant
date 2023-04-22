@@ -164,3 +164,36 @@ def test_create_file_with_directories():
     os.unlink(get_filesystem_path(os.path.join(new_file_dir, new_file_name)))
     os.rmdir(get_filesystem_path('new_dir/sub_dir'))
     os.rmdir(get_filesystem_path('new_dir'))
+
+def test_update_entire_file_success(temp_file):
+    # Use the fixture to get the path to the temporary file
+    test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
+
+    # Define the new content to be written to the file
+    new_content = 'Updated file content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.put(f'/api/v1/files/edit_entire_file/{test_endpoint_path}', json={'content': new_content})
+
+    # Assert that the response status code is 200 (Success)
+    assert response.status_code == 200
+    assert response.json() == {'message': 'File updated successfully'}
+
+    # Assert that the file content is updated as expected
+    with open(test_file_path, 'r') as updated_file:
+        assert updated_file.read() == new_content
+
+def test_update_entire_file_not_found():
+    # Define a non-existent file path
+    non_existent_file_path = 'non_existent_file.txt'
+
+    # Define the new content to be written to the file
+    new_content = 'Updated file content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.put(f'/api/v1/files/edit_entire_file/{non_existent_file_path}', json={'content': new_content})
+
+    # Assert that the response status code is 404 (Not Found)
+    assert response.status_code == 404
+    assert response.json() == {'detail': 'File not found'}
