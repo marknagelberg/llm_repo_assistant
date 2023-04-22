@@ -137,3 +137,30 @@ def test_create_file_ignored_in_llmignore(temp_file, llmignore_handler):
     assert response.json() == {'detail': 'Cannot create file that is ignored in `.llmignore`'}
     if os.path.exists(get_filesystem_path(new_file_name)):
         os.unlink(get_filesystem_path(new_file_name))
+
+def test_create_file_with_directories():
+    # Define the content to be written to the new file
+    file_content = 'New file content'
+
+    # Define the file name and path with non-existent directories
+    new_file_dir = 'new_dir/sub_dir/'
+    new_file_name = 'new_file.txt'
+
+    # Use the correct URL path to access the endpoint
+    response = client.post('/api/v1/files/', json={'file_name': new_file_name, 
+                                                   'path': new_file_dir, 
+                                                   'content': file_content, 
+                                                   'create_directories': True})
+
+    # Assert that the response status code is 201 (Created)
+    assert response.status_code == 201
+    assert response.json() == {'message': 'File created successfully'}
+
+    # Assert that the new file exists and contains the expected content
+    with open(get_filesystem_path(os.path.join(new_file_dir, new_file_name)), 'r') as new_file:
+        assert new_file.read() == file_content
+
+    # Teardown logic: remove the new file and directories
+    os.unlink(get_filesystem_path(os.path.join(new_file_dir, new_file_name)))
+    os.rmdir(get_filesystem_path('new_dir/sub_dir'))
+    os.rmdir(get_filesystem_path('new_dir'))
