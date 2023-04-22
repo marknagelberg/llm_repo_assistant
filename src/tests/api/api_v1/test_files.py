@@ -19,7 +19,8 @@ def temp_file():
         temp_file_path = temp_file.name
     yield temp_file_path
     # Teardown logic: remove the temporary file 
-    os.unlink(temp_file_path)
+    if os.path.exists(temp_file_path):
+        os.unlink(temp_file_path)
 
 # Define a fixture for handling .llmignore file
 @pytest.fixture(scope='function')
@@ -197,3 +198,131 @@ def test_update_entire_file_not_found():
     # Assert that the response status code is 404 (Not Found)
     assert response.status_code == 404
     assert response.json() == {'detail': 'File not found'}
+
+def test_update_entire_file_ignored_in_llmignore(temp_file, llmignore_handler):
+    # Use the fixture to get the path to the temporary file
+    test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
+
+    # Get filename of temp_file
+    filename = os.path.basename(test_file_path)
+
+    # Create a .llmignore file that ignores the temporary file
+    with open('.llmignore', 'w') as llmignore_file:
+        llmignore_file.write(filename)
+
+    # Define the new content to be written to the file
+    new_content = 'Updated file content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.put(f'/api/v1/files/edit_entire_file/{test_endpoint_path}', json={'content': new_content})
+
+    # Assert that the response status code is 403 (Forbidden)
+    # because the file is ignored in .llmignore
+    assert response.status_code == 403
+    assert response.json() == {'detail': 'File is ignored in `.llmignore`'}
+
+
+def test_edit_file_by_line_number_success(temp_file):
+    # Use the fixture to get the path to the temporary file
+    test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
+
+    # Define the new content to be written to the file
+    new_content = 'Updated line content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.post(f'/api/v1/files/edit_by_line_number/{test_endpoint_path}', json={'start_line': 0, 'content': new_content})
+
+    # Assert that the response status code is 200 (Success)
+    assert response.status_code == 200
+    assert response.json() == {'message': 'File updated successfully'}
+
+    # Assert that the file content is updated as expected
+    with open(test_file_path, 'r') as updated_file:
+        assert updated_file.read() == new_content
+
+def test_edit_file_by_line_number_not_found():
+    # Define a non-existent file path
+    non_existent_file_path = 'non_existent_file.txt'
+
+    # Define the new content to be written to the file
+    new_content = 'Updated line content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.post(f'/api/v1/files/edit_by_line_number/{non_existent_file_path}', json={'start_line': 0, 'content': new_content})
+
+    # Assert that the response status code is 404 (Not Found)
+    assert response.status_code == 404
+    assert response.json() == {'detail': 'File not found'}
+
+def test_edit_file_by_line_number_ignored_in_llmignore(temp_file, llmignore_handler):
+    # Use the fixture to get the path to the temporary file
+    test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
+
+    # Get filename of temp_file
+    filename = os.path.basename(test_file_path)
+
+    # Create a .llmignore file that ignores the temporary file
+    with open('.llmignore', 'w') as llmignore_file:
+        llmignore_file.write(filename)
+
+    # Define the new content to be written to the file
+    new_content = 'Updated line content'
+
+    # Use the correct URL path to access the endpoint
+    response = client.post(f'/api/v1/files/edit_by_line_number/{test_endpoint_path}', json={'start_line': 0, 'content': new_content})
+
+    # Assert that the response status code is 403 (Forbidden)
+    # because the file is ignored in .llmignore
+    assert response.status_code == 403
+    assert response.json() == {'detail': 'File is ignored in `.llmignore`'}
+
+def test_delete_file_success(temp_file):
+    # Use the fixture to get the path to the temporary file
+    test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
+
+    # Use the correct URL path to access the endpoint
+    response = client.delete(f'/api/v1/files/{test_endpoint_path}')
+
+    # Assert that the response status code is 200 (Success)
+    assert response.status_code == 200
+    assert response.json() == {'message': 'File deleted successfully'}
+
+    # Assert that the file no longer exists
+    assert not os.path.exists(test_file_path)
+
+
+def test_delete_file_not_found():
+    # Define a non-existent file path
+    non_existent_file_path = 'non_existent_file.txt'
+
+    # Use the correct URL path to access the endpoint
+    response = client.delete(f'/api/v1/files/{non_existent_file_path}')
+
+    # Assert that the response status code is 404 (Not Found)
+    assert response.status_code == 404
+    assert response.json() == {'detail': 'File not found'}
+
+
+def test_delete_file_ignored_in_llmignore(temp_file, llmignore_handler):
+    # Use the fixture to get the path to the temporary file
+    test_file_path = temp_file
+    test_endpoint_path = get_endpoint_path(test_file_path)
+
+    # Get filename of temp_file
+    filename = os.path.basename(test_file_path)
+
+    # Create a .llmignore file that ignores the temporary file
+    with open('.llmignore', 'w') as llmignore_file:
+        llmignore_file.write(filename)
+
+    # Use the correct URL path to access the endpoint
+    response = client.delete(f'/api/v1/files/{test_endpoint_path}')
+
+    # Assert that the response status code is 403 (Forbidden)
+    # because the file is ignored in .llmignore
+    assert response.status_code == 403
+    assert response.json() == {'detail': 'File is ignored in `.llmignore`'}
