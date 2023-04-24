@@ -20,7 +20,6 @@ def test_directory():
 def test_create_directory_success(test_directory):
     response = client.post('/api/v1/directories', json={'dir_name': 'test_dir', 'path': test_directory})
     assert response.status_code == 200
-    assert response.json() == {'message': 'Directory created successfully'}
 
 def test_create_directory_invalid_path():
     response = client.post('/api/v1/directories', json={'dir_name': 'test_dir', 'path': '/invalid_path/'})

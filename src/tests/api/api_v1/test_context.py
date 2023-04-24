@@ -13,7 +13,8 @@ def test_search_files_and_directories():
 
 def test_get_file_structure():
     # Test case for the get_file_structure endpoint
-    response = client.post("/api/v1/context/file_structure/test_dir_path")
+    # Use the root directory of the repository as the test directory
+    response = client.post("/api/v1/context/file_structure/")
     assert response.status_code == 200
     # Add more assertions based on expected response
 

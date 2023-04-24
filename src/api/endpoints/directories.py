@@ -23,8 +23,11 @@ async def list_directory_contents(dir_path: str):
 @router.post("/")
 async def create_directory(directory_request: DirectoryRequest):
     target_path = FilePath(directory_request.path) / directory_request.dir_name
+    parent_directory = target_path.parent
     if is_llmignored(str(target_path)):
         raise HTTPException(status_code=404, detail="Directory is ignored in `.llmignore`")
+    if not parent_directory.exists():
+        raise HTTPException(status_code=409, detail="Parent directory does not exist")
     if not target_path.exists():
         target_path.mkdir(parents=True, exist_ok=True)
         return {"message": "Directory created successfully"}
@@ -42,5 +45,3 @@ async def delete_directory(dir_path: str):
         return {"message": "Directory deleted successfully"}
     else:
         raise HTTPException(status_code=404, detail="Directory not found")
-
-
