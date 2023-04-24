@@ -15,7 +15,7 @@ Think step by step about how you will complete this task. Run the steps by me
 and prompt me for approval before you execute each subsequent step.
 
 
-### Running Tests
+### Running Tests and Refactoring
 
 I have developed a set of tests in my code repo which
 **insert high-level details about the repo**.
@@ -24,9 +24,6 @@ Please run these tests and fix issues
 that arise, which likely means a mistake in the code but also may be a mistake
 in the test. Do this step by step and ask for my approval before proceeding
 through each step.
-
-Use the functionality of the LLM Code Repo Assistant to the fullest extent.
-Reduce the size of API calls when possible. 
 
 
 ### Refactoring Tests
