@@ -5,7 +5,7 @@ from enum import Enum
 from fastapi import FastAPI, HTTPException, Query, APIRouter, Body
 from typing import Optional
 
-from src.schemas import UpdateFunctionDefinitionRequest, UpdateClassDefinitionRequest, NewFunctionDefinitionRequest, NewClassDefinitionRequest
+from src.schemas import UpdateFunctionDefinitionRequest, UpdateClassDefinitionRequest, NewFunctionDefinitionRequest, NewClassDefinitionRequest, UpdateFunctionDocstringRequest
 from src.utils import extract_file_summary, get_filesystem_path
 from src.core.config import settings
 from src.utils import is_llmignored
@@ -366,3 +366,121 @@ async def create_class_definition(
         raise HTTPException(status_code=400, detail="Unsupported language")
 
     return {"status": "success", "message": "Class definition created"}
+
+
+@router.get("/get_function_docstring/{language}/{file_path:path}/{function_name}")
+async def get_function_docstring(language: Language, file_path: str, function_name: str):
+    try:
+        # Read the content of the file
+        with open(file_path, 'r') as file:
+            content = file.read()
+
+        # Parse the content using the ast module
+        parsed_content = ast.parse(content)
+
+        # Find the specified function and extract its docstring
+        for node in parsed_content.body:
+            if isinstance(node, ast.FunctionDef) and node.name == function_name:
+                docstring = ast.get_docstring(node)
+                return {"docstring": docstring}
+
+        # If the function is not found, raise an exception
+        raise HTTPException(status_code=404, detail="Function not found")
+
+    except FileNotFoundError:
+        # If the file is not found, raise an exception
+        raise HTTPException(status_code=404, detail="File not found")
+
+@router.put('/update_function_docstring/{language}/{file_path:path}/{function_name}')
+async def update_function_docstring(
+    language: Language,
+    file_path: str,
+    function_name: str,
+    update_docstring_request: UpdateFunctionDocstringRequest
+):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        parsed_content = ast.parse(content)
+        for node in parsed_content.body:
+            if isinstance(node, ast.FunctionDef) and node.name == function_name:
+                node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
+                with open(file_path, 'w') as file:
+                    file.write(astunparse.unparse(parsed_content))
+                return {'status': 'success', 'message': 'Function docstring updated'}
+        raise HTTPException(status_code=404, detail='Function not found')
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='File not found')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/get_class_docstring/{language}/{file_path:path}/{class_name}')
+async def get_class_docstring(language: Language, file_path: str, class_name: str):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        parsed_content = ast.parse(content)
+        for node in parsed_content.body:
+            if isinstance(node, ast.ClassDef) and node.name == class_name:
+                docstring = ast.get_docstring(node)
+                return {'docstring': docstring}
+        raise HTTPException(status_code=404, detail='Class not found')
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='File not found')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/update_class_docstring/{language}/{file_path:path}/{class_name}')
+async def update_class_docstring(
+    language: Language,
+    file_path: str,
+    class_name: str,
+    update_docstring_request: UpdateFunctionDocstringRequest
+):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        parsed_content = ast.parse(content)
+        for node in parsed_content.body:
+            if isinstance(node, ast.ClassDef) and node.name == class_name:
+                node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
+                with open(file_path, 'w') as file:
+                    file.write(astunparse.unparse(parsed_content))
+                return {'status': 'success', 'message': 'Class docstring updated'}
+        raise HTTPException(status_code=404, detail='Class not found')
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='File not found')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get('/get_module_docstring/{language}/{file_path:path}')
+async def get_module_docstring(language: Language, file_path: str):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        parsed_content = ast.parse(content)
+        docstring = ast.get_docstring(parsed_content)
+        return {'docstring': docstring}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='File not found')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put('/update_module_docstring/{language}/{file_path:path}')
+async def update_module_docstring(
+    language: Language,
+    file_path: str,
+    update_docstring_request: UpdateFunctionDocstringRequest
+):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+        parsed_content = ast.parse(content)
+        parsed_content.body.insert(0, ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring)))
+        with open(file_path, 'w') as file:
+            file.write(astunparse.unparse(parsed_content))
+        return {'status': 'success', 'message': 'Module docstring updated'}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='File not found')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

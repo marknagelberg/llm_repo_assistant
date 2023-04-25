@@ -16,3 +16,7 @@ class UpdateClassDefinitionRequest(BaseModel):
 
 class NewClassDefinitionRequest(BaseModel):
     new_class_definition: str
+
+
+class UpdateFunctionDocstringRequest(BaseModel):
+    new_docstring: str
