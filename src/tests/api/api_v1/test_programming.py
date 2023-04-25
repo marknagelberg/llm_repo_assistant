@@ -100,20 +100,6 @@ def temp_python_file_with_class(tmpdir):
     # Clean up by deleting the temporary file
     os.remove(file_path)
 
-def test_get_class_docstring_success(temp_python_file_with_class):
-    # Use the temporary Python file created by the fixture `temp_python_file_with_class`
-    file_path, class_name, _ = temp_python_file_with_class
-    expected_docstring = 'This is a sample class.'
-
-    # Call the get_class_docstring endpoint
-    response = client.get(f"/api/v1/programming/get_class_docstring/python/{file_path}/{class_name}")
-
-    # Assert that the response status code is 200 (OK)
-    assert response.status_code == 200
-
-    # Assert that the response contains the expected docstring
-    assert response.json() == {'docstring': expected_docstring}
-
 def test_get_class_docstring_no_docstring(temp_python_file_with_class):
     # Modify the temporary Python file created by the fixture `temp_python_file_with_class`
     # to remove the docstring from the class
@@ -130,27 +116,6 @@ def test_get_class_docstring_no_docstring(temp_python_file_with_class):
     # Assert that the response indicates that no docstring was found
     assert response.json() == {'docstring': None}
 
-def test_update_class_docstring_success(temp_python_file_with_class):
-    # Use the temporary Python file created by the fixture `temp_python_file_with_class`
-    file_path, class_name, _ = temp_python_file_with_class
-    new_docstring = 'This is the updated docstring.'
-
-    # Call the update_class_docstring endpoint
-    response = client.put(
-        f"/api/v1/programming/update_class_docstring/python/{file_path}/{class_name}",
-        json={"new_docstring": new_docstring}
-    )
-
-    # Assert that the response status code is 200 (OK)
-    assert response.status_code == 200
-
-    # Assert that the response contains the expected message
-    assert response.json() == {"status": "success", "message": "Class docstring updated"}
-
-    # Verify that the docstring was actually updated in the file
-    with open(file_path, 'r') as file:
-        content = file.read()
-    assert new_docstring in content
 
 def test_update_class_docstring_no_docstring(temp_python_file_with_class):
     # Modify the temporary Python file created by the fixture `temp_python_file_with_class`
@@ -262,7 +227,7 @@ def test_update_module_docstring_no_docstring(temp_python_file_with_class):
 def test_get_class_docstring_success(temp_python_file_with_class):
     # Use the temporary Python file created by the fixture `temp_python_file_with_class`
     file_path, class_name, _ = temp_python_file_with_class
-    expected_docstring = 'This is a test class.'
+    expected_docstring = 'This is a sample class.'
 
     # Call the get_class_docstring endpoint
     response = client.get(f"/api/v1/programming/get_class_docstring/python/{file_path}/{class_name}")
@@ -289,3 +254,12 @@ def test_update_class_docstring_success(temp_python_file_with_class):
 
     # Assert that the response contains the expected message
     assert response.json() == {"status": "success", "message": "Class docstring updated"}
+
+@pytest.fixture
+def temp_python_file_without_docstring(tmpdir):
+    # Create a temporary Python file without a module-level docstring
+    file_content = "class SampleClass:\n    pass\n"
+    file_path = tmpdir.join("temp_file_without_docstring.py")
+    with open(file_path, "w") as file:
+        file.write(file_content)
+    return str(file_path), file_content
