@@ -9,9 +9,12 @@ code.
 It is designed to be usable as a ChatGPT plugin, allowing you do leverage the
 power of ChatGPT to edit your repo from within ChatGPT.
 
-WARNING: This is in early stages of development. It provides the LLM with read
+## WARNING
+
+This is in early stages of development. It provides the LLM with read
 and write access to your repo, so use at your own risk. Be sure to track your
-repo with version control so you can revert unwanted changes from the LLM.
+repo with version control so you can revert unwanted changes from the LLM and
+also create a backup of your repo.
 
 ## Features
 
@@ -21,12 +24,12 @@ reading, writing, and deleting files, as well as creating and managing directori
 insert new lines at specific locations.
 - **Code Understanding**: Retrieve high-level class and function signatures,
 get class and function definitions, and update or create new class and function definitions.
+Also read and create code documentation.
 - **Test Execution**: Run tests for your code repository using the integrated
 test execution feature.
-- **Code Summaries**: Get language-specific code summaries to understand the
-structure and content of your code files.
 - **Search and Utility Functions**: Search for files and directories,
-move files or directories, and get the file structure of your repository.
+move files or directories, and get the file structure of your repository along with
+information about files most relevant to LLMs.
 
 ## Supported Languages
 
