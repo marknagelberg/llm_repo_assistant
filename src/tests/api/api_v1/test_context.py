@@ -4,13 +4,6 @@ from src.main import app
 client = TestClient(app)
 
 
-def test_search_files_and_directories():
-    # Test case for the search_files_and_directories endpoint
-    response = client.get("/api/v1/context/search", params={"q": "test_query"})
-    assert response.status_code == 200
-    # Add more assertions based on expected response
-
-
 def test_get_file_structure():
     # Test case for the get_file_structure endpoint
     # Use the root directory of the repository as the test directory

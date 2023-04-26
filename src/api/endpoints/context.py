@@ -11,24 +11,6 @@ from src.utils import is_llmignored, get_git_diff
 
 router = APIRouter()
 
-def search_files(query: str, root_dir: FilePath):
-    matches = []
-    for root, dirnames, filenames in os.walk(root_dir):
-        for filename in fnmatch.filter(filenames, f"*{query}*"):
-            if not is_llmignored(os.path.join(root, filename)):
-                matches.append(os.path.join(root, filename))
-        for dirname in fnmatch.filter(dirnames, f"*{query}*"):
-            if not is_llmignored(os.path.join(root, dirname)):
-                matches.append(os.path.join(root, dirname))
-    return matches
-
-
-@router.get("/search")
-async def search_files_and_directories(q: str = Query(..., min_length=1)):
-    root_dir = FilePath(settings.REPO_ROOT)  # Set your root directory here
-    search_results = search_files(q, root_dir)
-    return {"matches": search_results}
-
 
 def get_directory_structure(path: str) -> Dict[str, Any]:
     item = {
