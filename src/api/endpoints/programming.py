@@ -371,21 +371,30 @@ async def create_class_definition(
 @router.get("/get_function_docstring/{language}/{file_path:path}/{function_name}")
 async def get_function_docstring(language: Language, file_path: str, function_name: str):
     try:
+        full_file_path = get_filesystem_path(file_path)
+        if is_llmignored(full_file_path):
+            raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        if not os.path.isfile(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
         # Read the content of the file
         with open(file_path, 'r') as file:
             content = file.read()
 
-        # Parse the content using the ast module
-        parsed_content = ast.parse(content)
+        if language == Language.python:
+            # Parse the content using the ast module
+            parsed_content = ast.parse(content)
 
-        # Find the specified function and extract its docstring
-        for node in parsed_content.body:
-            if isinstance(node, ast.FunctionDef) and node.name == function_name:
-                docstring = ast.get_docstring(node)
-                return {"docstring": docstring}
+            # Find the specified function and extract its docstring
+            for node in parsed_content.body:
+                if (isinstance(node, ast.FunctionDef) or isinstance(node, ast.AsyncFunctionDef)) and node.name == function_name:
+                    docstring = ast.get_docstring(node)
+                    return {"docstring": docstring}
 
-        # If the function is not found, raise an exception
-        raise HTTPException(status_code=404, detail="Function not found")
+            # If the function is not found, raise an exception
+            raise HTTPException(status_code=404, detail="Function not found")
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported language")
 
     except FileNotFoundError:
         # If the file is not found, raise an exception
@@ -399,36 +408,52 @@ async def update_function_docstring(
     update_docstring_request: UpdateFunctionDocstringRequest
 ):
     try:
+        full_file_path = get_filesystem_path(file_path)
+        if is_llmignored(full_file_path):
+            raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        if not os.path.isfile(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
         with open(file_path, 'r') as file:
             content = file.read()
-        parsed_content = ast.parse(content)
-        for node in parsed_content.body:
-            if isinstance(node, ast.FunctionDef) and node.name == function_name:
-                node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
-                with open(file_path, 'w') as file:
-                    file.write(astunparse.unparse(parsed_content))
-                return {'status': 'success', 'message': 'Function docstring updated'}
-        raise HTTPException(status_code=404, detail='Function not found')
+
+        if language == Language.python:
+            parsed_content = ast.parse(content)
+            for node in parsed_content.body:
+                if (isinstance(node, ast.FunctionDef) or isinstance(node, ast.AsyncFunctionDef)) and node.name == function_name:
+                    node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
+                    with open(file_path, 'w') as file:
+                        file.write(astunparse.unparse(parsed_content))
+                    return {'status': 'success', 'message': 'Function docstring updated'}
+            raise HTTPException(status_code=404, detail='Function not found')
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported language")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='File not found')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/get_class_docstring/{language}/{file_path:path}/{class_name}')
 async def get_class_docstring(language: Language, file_path: str, class_name: str):
     try:
+        full_file_path = get_filesystem_path(file_path)
+        if is_llmignored(full_file_path):
+            raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        if not os.path.isfile(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
         with open(file_path, 'r') as file:
             content = file.read()
-        parsed_content = ast.parse(content)
-        for node in parsed_content.body:
-            if isinstance(node, ast.ClassDef) and node.name == class_name:
-                docstring = ast.get_docstring(node)
-                return {'docstring': docstring}
-        raise HTTPException(status_code=404, detail='Class not found')
+
+        if language == Language.python:
+            parsed_content = ast.parse(content)
+            for node in parsed_content.body:
+                if isinstance(node, ast.ClassDef) and node.name == class_name:
+                    docstring = ast.get_docstring(node)
+                    return {'docstring': docstring}
+            raise HTTPException(status_code=404, detail='Class not found')
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported language")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='File not found')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put('/update_class_docstring/{language}/{file_path:path}/{class_name}')
 async def update_class_docstring(
@@ -438,33 +463,48 @@ async def update_class_docstring(
     update_docstring_request: UpdateFunctionDocstringRequest
 ):
     try:
+        full_file_path = get_filesystem_path(file_path)
+        if is_llmignored(full_file_path):
+            raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        if not os.path.isfile(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
         with open(file_path, 'r') as file:
             content = file.read()
-        parsed_content = ast.parse(content)
-        for node in parsed_content.body:
-            if isinstance(node, ast.ClassDef) and node.name == class_name:
-                node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
-                with open(file_path, 'w') as file:
-                    file.write(astunparse.unparse(parsed_content))
-                return {'status': 'success', 'message': 'Class docstring updated'}
-        raise HTTPException(status_code=404, detail='Class not found')
+
+        if language == Language.python:
+            parsed_content = ast.parse(content)
+            for node in parsed_content.body:
+                if isinstance(node, ast.ClassDef) and node.name == class_name:
+                    node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
+                    with open(file_path, 'w') as file:
+                        file.write(astunparse.unparse(parsed_content))
+                    return {'status': 'success', 'message': 'Class docstring updated'}
+            raise HTTPException(status_code=404, detail='Class not found')
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported language")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='File not found')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/get_module_docstring/{language}/{file_path:path}')
 async def get_module_docstring(language: Language, file_path: str):
     try:
+        full_file_path = get_filesystem_path(file_path)
+        if is_llmignored(full_file_path):
+            raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        if not os.path.isfile(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
         with open(file_path, 'r') as file:
             content = file.read()
-        parsed_content = ast.parse(content)
-        docstring = ast.get_docstring(parsed_content)
-        return {'docstring': docstring}
+        if language == Language.python:
+            parsed_content = ast.parse(content)
+            docstring = ast.get_docstring(parsed_content)
+            return {'docstring': docstring}
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported language")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='File not found')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put('/update_module_docstring/{language}/{file_path:path}')
 async def update_module_docstring(
@@ -473,14 +513,22 @@ async def update_module_docstring(
     update_docstring_request: UpdateFunctionDocstringRequest
 ):
     try:
+        full_file_path = get_filesystem_path(file_path)
+        if is_llmignored(full_file_path):
+            raise HTTPException(status_code=404, detail="File is ignored in `.llmignore`")
+        if not os.path.isfile(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
         with open(file_path, 'r') as file:
             content = file.read()
-        parsed_content = ast.parse(content)
-        parsed_content.body.insert(0, ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring)))
-        with open(file_path, 'w') as file:
-            file.write(astunparse.unparse(parsed_content))
-        return {'status': 'success', 'message': 'Module docstring updated'}
+
+        if language == Language.python:
+            parsed_content = ast.parse(content)
+            parsed_content.body.insert(0, ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring)))
+            with open(file_path, 'w') as file:
+                file.write(astunparse.unparse(parsed_content))
+            return {'status': 'success', 'message': 'Module docstring updated'}
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported language")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='File not found')
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
