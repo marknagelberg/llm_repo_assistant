@@ -19,24 +19,30 @@ def get_directory_structure(path: str) -> Dict[str, Any]:
         "type": "file" if os.path.isfile(path) else "directory"
     }
 
-    # Ignore any path / files that are in .llmignore or are part of a .git directory
-    if is_llmignored(item["path"]) or item["path"][-4:] == '.git':
-            return None
+    try:
+        # Ignore any path / files that are in .llmignore or are part of a .git directory
+        if is_llmignored(item["path"]) or item["path"][-4:] == '.git':
+                return None
 
-    if os.path.isfile(path):
+        if os.path.isfile(path):
 
-        item["metadata"] = {
-            "num_tokens": 0,  # Replace with actual token count calculation
-            "file_size_bytes": os.path.getsize(path)
-        }
-    else:
-        children = [
-            get_directory_structure(os.path.join(path, child))
-            for child in os.listdir(path)
-        ]
-        item["children"] = [child for child in children if child is not None]
+            item["metadata"] = {
+                "file_size_bytes": os.path.getsize(path)
+            }
+        else:
+            children = [
+                get_directory_structure(os.path.join(path, child))
+                for child in os.listdir(path)
+            ]
+            item["children"] = [child for child in children if child is not None]
 
-    return item
+        return item
+    except FileNotFoundError:
+        # TODO - there are some situations, particularly in python environment, where
+        # the file does seem to exist but we get a FileNotFoundError. This is a hacky
+        # workaround for now. Example of error that has happened:
+        # E.g FileNotFoundError: [Errno 2] No such file or directory: '/repo/venv/bin/python'
+        return None
 
 
 @router.post("/file_structure/{dir_path:path}")

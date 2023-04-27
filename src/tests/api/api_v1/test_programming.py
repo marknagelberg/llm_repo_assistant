@@ -57,6 +57,8 @@ def test_get_function_docstring_success(temp_python_file_with_function):
     # Use the temporary Python file created by the fixture `temp_python_file_with_function`
     file_path, function_name, expected_docstring = temp_python_file_with_function
     endpoint_path = get_endpoint_path(file_path)
+    print(file_path)
+    print(endpoint_path)
 
     # Call the get_function_docstring endpoint
     response = client.get(f"/api/v1/programming/get_function_docstring/python/{endpoint_path}/{function_name}")

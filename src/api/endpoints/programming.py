@@ -378,7 +378,7 @@ async def get_function_docstring(language: Language, file_path: str, function_na
             raise HTTPException(status_code=404, detail="File not found")
 
         # Read the content of the file
-        with open(file_path, 'r') as file:
+        with open(full_file_path, 'r') as file:
             content = file.read()
 
         if language == Language.python:
@@ -414,7 +414,7 @@ async def update_function_docstring(
         if not os.path.isfile(full_file_path):
             raise HTTPException(status_code=404, detail="File not found")
 
-        with open(file_path, 'r') as file:
+        with open(full_file_path, 'r') as file:
             content = file.read()
 
         if language == Language.python:
@@ -422,7 +422,7 @@ async def update_function_docstring(
             for node in parsed_content.body:
                 if (isinstance(node, ast.FunctionDef) or isinstance(node, ast.AsyncFunctionDef)) and node.name == function_name:
                     node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
-                    with open(file_path, 'w') as file:
+                    with open(full_file_path, 'w') as file:
                         file.write(astunparse.unparse(parsed_content))
                     return {'status': 'success', 'message': 'Function docstring updated'}
             raise HTTPException(status_code=404, detail='Function not found')
@@ -440,7 +440,7 @@ async def get_class_docstring(language: Language, file_path: str, class_name: st
         if not os.path.isfile(full_file_path):
             raise HTTPException(status_code=404, detail="File not found")
 
-        with open(file_path, 'r') as file:
+        with open(full_file_path, 'r') as file:
             content = file.read()
 
         if language == Language.python:
@@ -469,7 +469,7 @@ async def update_class_docstring(
         if not os.path.isfile(full_file_path):
             raise HTTPException(status_code=404, detail="File not found")
 
-        with open(file_path, 'r') as file:
+        with open(full_file_path, 'r') as file:
             content = file.read()
 
         if language == Language.python:
@@ -477,7 +477,7 @@ async def update_class_docstring(
             for node in parsed_content.body:
                 if isinstance(node, ast.ClassDef) and node.name == class_name:
                     node.body[0] = ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring))
-                    with open(file_path, 'w') as file:
+                    with open(full_file_path, 'w') as file:
                         file.write(astunparse.unparse(parsed_content))
                     return {'status': 'success', 'message': 'Class docstring updated'}
             raise HTTPException(status_code=404, detail='Class not found')
@@ -495,7 +495,7 @@ async def get_module_docstring(language: Language, file_path: str):
         if not os.path.isfile(full_file_path):
             raise HTTPException(status_code=404, detail="File not found")
 
-        with open(file_path, 'r') as file:
+        with open(full_file_path, 'r') as file:
             content = file.read()
         if language == Language.python:
             parsed_content = ast.parse(content)
@@ -519,13 +519,13 @@ async def update_module_docstring(
         if not os.path.isfile(full_file_path):
             raise HTTPException(status_code=404, detail="File not found")
 
-        with open(file_path, 'r') as file:
+        with open(full_file_path, 'r') as file:
             content = file.read()
 
         if language == Language.python:
             parsed_content = ast.parse(content)
             parsed_content.body.insert(0, ast.Expr(value=ast.Str(s=update_docstring_request.new_docstring)))
-            with open(file_path, 'w') as file:
+            with open(full_file_path, 'w') as file:
                 file.write(astunparse.unparse(parsed_content))
             return {'status': 'success', 'message': 'Module docstring updated'}
         else:

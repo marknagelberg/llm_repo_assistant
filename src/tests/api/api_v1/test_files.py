@@ -11,33 +11,36 @@ import tempfile
 client = TestClient(app)
 
 # Define a fixture for creating and cleaning up temporary files
+
+
 @pytest.fixture(scope='function')
 def temp_file():
-    # Create a temporary file in target repo top-level directory
     with tempfile.NamedTemporaryFile(mode='w', dir=settings.REPO_ROOT, delete=False) as temp_file:
         temp_file.write('Temporary file content')
         temp_file_path = temp_file.name
+
     yield temp_file_path
-    # Teardown logic: remove the temporary file 
+
+    # Teardown logic: remove the temporary file
     if os.path.exists(temp_file_path):
         os.unlink(temp_file_path)
+
 
 # Define a fixture for handling .llmignore file
 @pytest.fixture(scope='function')
 def llmignore_handler():
     # Check if .llmignore already exists and back it up if it does
-    llmignore_exists = os.path.exists('.llmignore')
+    llmignore_exists = os.path.exists(get_filesystem_path('.llmignore'))
     if llmignore_exists:
-        shutil.copyfile('.llmignore', '.llmignore.bak')
+        shutil.copyfile(get_filesystem_path('.llmignore'), get_filesystem_path('.llmignore.bak'))
     yield
     # Teardown logic: remove the temporary .llmignore file created by the test
-    if os.path.exists('.llmignore'):
-        os.remove('.llmignore')
+    if os.path.exists(get_filesystem_path('.llmignore')):
+        os.remove(get_filesystem_path('.llmignore'))
     # Restore the original .llmignore file if it existed
     if llmignore_exists:
-        shutil.move('.llmignore.bak', '.llmignore')
+        shutil.move(get_filesystem_path('.llmignore.bak'), get_filesystem_path('.llmignore'))
 
-# Test cases for the endpoint: GET /{file_path:path} (Read a file)
 
 def test_read_file_success(temp_file):
     # Use the fixture to get the path to the temporary file
@@ -48,8 +51,8 @@ def test_read_file_success(temp_file):
     assert response.status_code == 200
     assert response.json() == {'content': 'Temporary file content'}
 
-# Remaining test functions...
 
+#@pytest.mark.parametrize('temp_file', ['custom_filename'], indirect=True)
 def test_read_file_ignored_in_llmignore(temp_file, llmignore_handler):
     # Use the fixture to get the path to the temporary file
     test_file_path = temp_file
@@ -58,7 +61,7 @@ def test_read_file_ignored_in_llmignore(temp_file, llmignore_handler):
     test_endpoint_path = get_endpoint_path(test_file_path)
 
     # Create a .llmignore file that ignores the temporary file
-    with open('.llmignore', 'w') as llmignore_file:
+    with open(get_filesystem_path('.llmignore'), 'w') as llmignore_file:
         llmignore_file.write(filename)
 
     # Use the correct URL path to access the endpoint
@@ -208,7 +211,7 @@ def test_update_entire_file_ignored_in_llmignore(temp_file, llmignore_handler):
     filename = os.path.basename(test_file_path)
 
     # Create a .llmignore file that ignores the temporary file
-    with open('.llmignore', 'w') as llmignore_file:
+    with open(get_filesystem_path('.llmignore'), 'w') as llmignore_file:
         llmignore_file.write(filename)
 
     # Define the new content to be written to the file
@@ -265,7 +268,7 @@ def test_edit_file_by_line_number_ignored_in_llmignore(temp_file, llmignore_hand
     filename = os.path.basename(test_file_path)
 
     # Create a .llmignore file that ignores the temporary file
-    with open('.llmignore', 'w') as llmignore_file:
+    with open(get_filesystem_path('.llmignore'), 'w') as llmignore_file:
         llmignore_file.write(filename)
 
     # Define the new content to be written to the file
@@ -316,7 +319,7 @@ def test_delete_file_ignored_in_llmignore(temp_file, llmignore_handler):
     filename = os.path.basename(test_file_path)
 
     # Create a .llmignore file that ignores the temporary file
-    with open('.llmignore', 'w') as llmignore_file:
+    with open(get_filesystem_path('.llmignore'), 'w') as llmignore_file:
         llmignore_file.write(filename)
 
     # Use the correct URL path to access the endpoint

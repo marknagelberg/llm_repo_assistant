@@ -1,9 +1,10 @@
 import os
-import stat
+import sys
 from enum import Enum
 import subprocess
 from typing import Optional, List
 from fastapi import HTTPException, APIRouter
+from contextlib import contextmanager
 
 from src.schemas import TestRunRequest
 from src.core.config import settings
@@ -37,6 +38,15 @@ def run_tests(test_command: List[str],
     finally:
         os.chdir(original_cwd)
 
+@contextmanager
+def activate_virtualenv(venv_path):
+    """Temporarily add the virtual environment to sys.path."""
+    original_sys_path = sys.path.copy()
+    sys.path.insert(0, venv_path + "/lib/python3.9/site-packages")
+    try:
+        yield
+    finally:
+        sys.path = original_sys_path
 
 @router.post("/run_tests/{test_framework}")
 async def run_tests_endpoint(test_framework: TestFramework, test_run_request: TestRunRequest):
@@ -54,8 +64,16 @@ async def run_tests_endpoint(test_framework: TestFramework, test_run_request: Te
     else:
         raise HTTPException(status_code=400, detail="Unsupported test framework")
 
-    test_output = run_tests(test_command, test_file_path, test_run_request.test_function_name)
+    venv_path = "/venv"
+
+    if not os.path.exists(venv_path + "/lib/python3.9/site-packages"):
+        error_message = """
+        Virtual environment for target repo not found. Provide a 'llm_target_repo_requirements.txt' file in your
+        target repo to use the run_tests endpoint and re-build the docker container. 
+        """
+        raise HTTPException(status_code=400, detail=error_message)
+
+    with activate_virtualenv("/venv"):
+        test_output = run_tests(test_command, test_file_path, test_run_request.test_function_name)
     return {"status": "success", "test_output": test_output}
-
-
 

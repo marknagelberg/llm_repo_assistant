@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 from typing import List, Dict, Any
 from fastapi import HTTPException
+import fnmatch
 
 from src.core.config import settings
 
@@ -109,11 +110,15 @@ def load_llmignore_patterns() -> List[str]:
     return []
 
 
-def is_llmignored(file_path: str) -> bool:
+def is_llmignored(filesystem_path: str) -> bool:
     llmignore_patterns = load_llmignore_patterns()
+    path_obj = Path(filesystem_path)
     for pattern in llmignore_patterns:
-        path_obj = Path(file_path)
-        if path_obj.match(pattern):
+        if fnmatch.fnmatch(path_obj.name, pattern):
+            return True
+        if fnmatch.fnmatch(str(path_obj), pattern):
+            return True
+        if fnmatch.fnmatch(str(path_obj.relative_to(path_obj.anchor)), pattern):
             return True
     return False
 
