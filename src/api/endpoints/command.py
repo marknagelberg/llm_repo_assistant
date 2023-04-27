@@ -55,25 +55,23 @@ async def run_tests_endpoint(test_framework: TestFramework, test_run_request: Te
     If no test file or function is specified, all available tests are run. Currently only `pytest` is supported.
     """
 
+    venv_path = "/venv"
+
     test_file_path = ""
     if test_run_request.test_file_path:
         test_file_path = get_filesystem_path(test_run_request.test_file_path)
 
     if test_framework.lower() == "pytest":
-        test_command = ["pytest"]
+        if not os.path.exists(venv_path + "/lib/python3.9/site-packages"):
+            error_message = """
+            Virtual environment for target repo not found. Provide a 'llm_target_repo_requirements.txt' file in your
+            target repo to use the run_tests endpoint and re-build the docker container. 
+            """
+            raise HTTPException(status_code=400, detail=error_message)
+        test_command = [os.path.join(venv_path, "bin", "python"), "-m", "pytest"]
     else:
         raise HTTPException(status_code=400, detail="Unsupported test framework")
 
-    venv_path = "/venv"
-
-    if not os.path.exists(venv_path + "/lib/python3.9/site-packages"):
-        error_message = """
-        Virtual environment for target repo not found. Provide a 'llm_target_repo_requirements.txt' file in your
-        target repo to use the run_tests endpoint and re-build the docker container. 
-        """
-        raise HTTPException(status_code=400, detail=error_message)
-
-    with activate_virtualenv("/venv"):
-        test_output = run_tests(test_command, test_file_path, test_run_request.test_function_name)
+    test_output = run_tests(test_command, test_file_path, test_run_request.test_function_name)
     return {"status": "success", "test_output": test_output}
 
