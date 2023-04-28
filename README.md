@@ -62,8 +62,11 @@ To add a ChatGPT plugin to work with the API, follow these steps:
 and click `Find manifest file`
 4. The plugin should now be available to use by ChatGPT
 
-## Roadmap
+## Future Features
 
 - Add support for different test suites
 - Add JavaScript support
 
+## Contributing
+
+We appreciate any contributions to the LLM Repo Assistant project! To get started with contributing, please read our [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on reporting issues, suggesting features, and submitting code changes.
