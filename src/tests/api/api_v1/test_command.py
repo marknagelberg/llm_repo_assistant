@@ -10,13 +10,13 @@ client = TestClient(app)
 
 @pytest.fixture(scope='function')
 def temp_test_file():
-    test_emoji_content = '''
+    test_emoji_content = """
 import emoji
 
 def test_emoji():
     result = emoji.emojize('Python is :thumbs_up:')
     assert 'Python is 👍' in result
-'''
+"""
     with tempfile.NamedTemporaryFile(mode='w', dir=settings.REPO_ROOT, delete=False, prefix='test_', suffix='.py') as temp_file:
         temp_file.write(test_emoji_content)
         temp_file_path = temp_file.name
