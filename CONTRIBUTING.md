@@ -29,11 +29,11 @@ git commit -m "Your commit message here"`
 
 ### Reporting Issues
 
-If you encounter any bugs or issues, please report them in the [Issues](https://github.com/marknagelberg/llm-repo-assistant/issues) section of the repository. Be sure to include detailed information about the issue, steps to reproduce it, and any relevant screenshots or error messages.
+If you encounter any bugs or issues, please report them in the [Issues](https://github.com/marknagelberg/llm_repo_assistant/issues) section of the repository. Be sure to include detailed information about the issue, steps to reproduce it, and any relevant screenshots or error messages.
 
 ### Suggesting Features
 
-We're always open to new ideas! If you have a suggestion for a new feature or enhancement, please open a new issue in the [Issues](https://github.com/marknagelberg/llm-repo-assistant/issues) section and describe your idea. We'll be happy to discuss it further.
+We're always open to new ideas! If you have a suggestion for a new feature or enhancement, please open a new issue in the [Issues](https://github.com/marknagelberg/llm_repo_assistant/issues) section and describe your idea. We'll be happy to discuss it further.
 
 Thank you for your interest in contributing to the LLM Repo Assistant project! We look forward to collaborating with you and making this project even better.
 
