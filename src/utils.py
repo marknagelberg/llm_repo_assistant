@@ -6,6 +6,8 @@ import ast
 from typing import List, Dict, Any
 from fastapi import HTTPException
 import fnmatch
+import docker
+from typing import Tuple
 
 from src.core.config import settings
 
@@ -157,3 +159,30 @@ def get_git_diff(directory: str) -> str:
     )
     return result.stdout
 
+
+def run_command_in_image(image_name: str, command: List[str]) -> Tuple[int, str]:
+    client = docker.from_env()
+
+    # Run the command in a new container
+    container = client.containers.run(image=image_name, 
+                                      command=command, 
+                                      detach=True,
+                                      working_dir=settings.REPO_ROOT,
+                                      volumes={settings.TARGET_REPO_PATH: {"bind": settings.REPO_ROOT, "mode": "rw"}})
+
+    # Wait for the container to finish executing
+    result = container.wait()
+
+    # Fetch the logs (standard output and standard error)
+    output = container.logs()
+
+    # Clean up the container
+    container.remove()
+
+    # Decode the output to a string
+    output_str = output.decode("utf-8")
+
+    # The result contains a dictionary with status and StatusCode (exit code)
+    exit_code = result['StatusCode']
+
+    return exit_code, output_str

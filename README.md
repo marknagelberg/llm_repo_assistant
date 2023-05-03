@@ -42,6 +42,9 @@ To get started with LLM Repo Assistant, follow these steps:
 2. Clone the LLM Repo Assistant repo
 3. Add an `.llmignore` file to the root directory of your target repo - this tells
 LLM Repo Assistant about files in your target repo that you want ignored by the LLM.
+3. Build and run the docker container for your code repo, and add the name of 
+the container to `TARGET_REPO_DOCKER_IMAGE_NAME` in `.env`
+in the LLM Repo Assistant root directory. (i.e. `TARGET_REPO_DOCKER_IMAGE_NAME=insert-your-container-name`)
 4. If you want the API to be able to run tests on your target repo,
 then edit the requirements file to the root directory of the LLM Repo Assistant repo
 called `llm_target_repo_requirements.txt`. This file should define the python environment
@@ -49,7 +52,7 @@ your tests should run in and should include `pytest`.
 5. Navigate to the `llm_repo_assistant` cloned repository and build the
 Docker image to run LLM Repo Assistant with `docker build -t llm_repo_assistant .`
 6. Run LLM Repo Assistant locally in a docker container with the following command:
-`docker run --rm -v "/path/to/cloned/repo/llm_repo_assistant:/app" -v "/path/to/your/code/repo:/repo" -p 8000:8000 --name llm_repo_assistant llm_repo_assistant`
+`docker run --rm -v "/var/run/docker.sock:/var/run/docker.sock" -v "/path/to/cloned/repo/llm_repo_assistant:/app" -v "/path/to/your/code/repo:/repo" -p 8000:8000 --name llm_repo_assistant llm_repo_assistant`
 7. View and test the API endpoints by visiting `localhost:8000/docs`
 
 ### Adding ChatGPT plugin

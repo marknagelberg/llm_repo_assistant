@@ -29,6 +29,10 @@ class Settings(BaseSettings):
 
     LLMIGNORE_PATH: Optional[FilePath] = None
 
+    TARGET_REPO_DOCKER_IMAGE_NAME: str
+
+    TARGET_REPO_PATH: str
+
     class Config:
         env_file = ".env"
         case_sensitive = True

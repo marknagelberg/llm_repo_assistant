@@ -10,6 +10,26 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install required packages for adding Docker repository
+RUN apt-get update && \
+    apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    apt-transport-https \
+    software-properties-common
+
+# Add Docker’s official GPG key
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# Set up the Docker repository
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+
+# Install Docker CLI
+RUN apt-get update && \
+    apt-get install -y docker-ce-cli
+
 RUN pip install virtualenv
 
 # Copy the requirements file into the container
@@ -17,12 +37,6 @@ COPY requirements.txt ./
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
-
-# Create a virtual environment for the target repo and install its requirements if available
-# This must be defined in a file llm_target_repo_requirements.txt
-RUN virtualenv /venv
-COPY ./llm_target_repo_requirements.txt /llm_target_repo_requirements.txt
-RUN if [ -f /llm_target_repo_requirements.txt ]; then /venv/bin/pip install -r /llm_target_repo_requirements.txt; fi
 
 # Copy the rest of the application code
 COPY . .

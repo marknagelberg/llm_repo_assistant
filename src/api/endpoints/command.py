@@ -2,13 +2,14 @@ import os
 import sys
 from enum import Enum
 import subprocess
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from fastapi import HTTPException, APIRouter
 from contextlib import contextmanager
+import docker
 
 from src.schemas import TestRunRequest
 from src.core.config import settings
-from src.utils import get_filesystem_path
+from src.utils import get_filesystem_path, run_command_in_image
 
 
 router = APIRouter()
@@ -18,8 +19,9 @@ class TestFramework(str, Enum):
     pytest = "pytest"
 
 def run_tests(test_command: List[str], 
+              docker_image_name: str,
               test_file_path: Optional[str] = None,
-              test_function_name: Optional[str] = None) -> str:
+              test_function_name: Optional[str] = None) -> Tuple[int, str]:
     if test_file_path and not test_function_name:
         test_command.extend([test_file_path])
     if test_function_name and not test_file_path:
@@ -31,22 +33,14 @@ def run_tests(test_command: List[str],
     os.chdir(settings.REPO_ROOT)
 
     try:
-        result = subprocess.run(test_command, check=True, text=True, capture_output=True)
-        return result.stdout
+        #result = subprocess.run(test_command, check=True, text=True, capture_output=True)
+        #return result.stdout
+        exit_code, output_str = run_command_in_image(docker_image_name, test_command)
+        return exit_code, output_str
     except subprocess.CalledProcessError as e:
         return e.stdout + e.stderr
     finally:
         os.chdir(original_cwd)
-
-@contextmanager
-def activate_virtualenv(venv_path):
-    """Temporarily add the virtual environment to sys.path."""
-    original_sys_path = sys.path.copy()
-    sys.path.insert(0, venv_path + "/lib/python3.9/site-packages")
-    try:
-        yield
-    finally:
-        sys.path = original_sys_path
 
 @router.post("/run_tests/{test_framework}")
 async def run_tests_endpoint(test_framework: TestFramework, test_run_request: TestRunRequest):
@@ -55,23 +49,21 @@ async def run_tests_endpoint(test_framework: TestFramework, test_run_request: Te
     If no test file or function is specified, all available tests are run. Currently only `pytest` is supported.
     """
 
-    venv_path = "/venv"
-
     test_file_path = ""
     if test_run_request.test_file_path:
         test_file_path = get_filesystem_path(test_run_request.test_file_path)
 
     if test_framework.lower() == "pytest":
-        if not os.path.exists(venv_path + "/lib/python3.9/site-packages"):
-            error_message = """
-            Virtual environment for target repo not found. Provide a 'llm_target_repo_requirements.txt' file in your
-            target repo to use the run_tests endpoint and re-build the docker container. 
-            """
-            raise HTTPException(status_code=400, detail=error_message)
-        test_command = [os.path.join(venv_path, "bin", "python"), "-m", "pytest"]
+        test_command = ["python", "-m", "pytest"]
     else:
         raise HTTPException(status_code=400, detail="Unsupported test framework")
 
-    test_output = run_tests(test_command, test_file_path, test_run_request.test_function_name)
+    try:
+        test_output = run_tests(test_command,
+                                settings.TARGET_REPO_DOCKER_IMAGE_NAME,
+                                test_file_path,
+                                test_run_request.test_function_name)
+    except docker.errors.ImageNotFound:
+        raise HTTPException(status_code=400, detail=f"Target repo docker image with name '{settings.TARGET_REPO_DOCKER_IMAGE_NAME}' not found.")
     return {"status": "success", "test_output": test_output}
 
