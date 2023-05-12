@@ -7,63 +7,55 @@ from fastapi import HTTPException, APIRouter
 from contextlib import contextmanager
 import docker
 
-from src.schemas import TestRunRequest
 from src.core.config import settings
 from src.utils import get_filesystem_path, run_command_in_image
+from src.schemas import Command, load_commands
 
 
-router = APIRouter()
+from fastapi import APIRouter, Depends, HTTPException
+from typing import Any, Dict
+import subprocess
+
+commands_router = APIRouter()
 
 
-class TestFramework(str, Enum):
-    pytest = "pytest"
+def create_router_for_command(command: Command) -> APIRouter:
+    router = APIRouter()
 
-def run_tests(test_command: List[str], 
-              docker_image_name: str,
-              test_file_path: Optional[str] = None,
-              test_function_name: Optional[str] = None) -> Tuple[int, str]:
-    if test_file_path and not test_function_name:
-        test_command.extend([test_file_path])
-    if test_function_name and not test_file_path:
-        test_command.extend([test_function_name])
-    if test_function_name and test_file_path:
-        test_command.extend([test_file_path + "::" + test_function_name])
+    @router.post(f"/command/{command.name}")
+    async def run_command(
+        args: Dict[str, Any] = Depends()
+    ) -> Dict[str, Any]:
+        command_line = [command.command]
 
-    original_cwd = os.getcwd()
-    os.chdir(settings.REPO_ROOT)
+        # Add arguments and flags to the command line
+        if command.args:
+            for arg in command.args:
+                if arg.name in args and args[arg.name] is not None:
+                    command_line.extend([arg.name, str(args[arg.name])])
 
-    try:
-        #result = subprocess.run(test_command, check=True, text=True, capture_output=True)
-        #return result.stdout
-        exit_code, output_str = run_command_in_image(docker_image_name, test_command)
-        return exit_code, output_str
-    except subprocess.CalledProcessError as e:
-        return e.stdout + e.stderr
-    finally:
-        os.chdir(original_cwd)
+        if command.flags:
+            for flag in command.flags:
+                if flag.name in args and args[flag.name] is not None:
+                    if flag.is_short:
+                        flag_str = f"-{flag.name}"
+                    else:
+                        flag_str = f"--{flag.name}"
+                    command_line.append(flag_str)
+                    if flag.type == 'str':
+                        command_line.append(str(args[flag.name]))
 
-@router.post("/run_tests/{test_framework}")
-async def run_tests_endpoint(test_framework: TestFramework, test_run_request: TestRunRequest):
-    """
-    Runs tests for repo. Endpoint executes tests with optional specification of test file and test function.
-    If no test file or function is specified, all available tests are run. Currently only `pytest` is supported.
-    """
+        # Run the command in the specified docker image
+        try:
+            exit_code, output_str = run_command_in_image(settings.TARGET_REPO_DOCKER_IMAGE_NAME, command_line)
+        except docker.errors.ImageNotFound:
+            raise HTTPException(status_code=400, 
+                                detail=f"Target repo docker image with name '{settings.TARGET_REPO_DOCKER_IMAGE_NAME}' not found.")
+        return {"exit_code": exit_code, "output_str": output_str}
 
-    test_file_path = ""
-    if test_run_request.test_file_path:
-        test_file_path = get_filesystem_path(test_run_request.test_file_path)
+    return router
 
-    if test_framework.lower() == "pytest":
-        test_command = ["python", "-m", "pytest"]
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported test framework")
-
-    try:
-        test_output = run_tests(test_command,
-                                settings.TARGET_REPO_DOCKER_IMAGE_NAME,
-                                test_file_path,
-                                test_run_request.test_function_name)
-    except docker.errors.ImageNotFound:
-        raise HTTPException(status_code=400, detail=f"Target repo docker image with name '{settings.TARGET_REPO_DOCKER_IMAGE_NAME}' not found.")
-    return {"status": "success", "test_output": test_output}
-
+commands = load_commands('command_config.yml')
+for command in commands:
+    router = create_router_for_command(command)
+    commands_router.include_router(router)

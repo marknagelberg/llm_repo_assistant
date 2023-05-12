@@ -1,8 +1,36 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+import yaml
+from pydantic import BaseModel, Field, ValidationError
+from typing import List, Optional
+
+class Flag(BaseModel):
+    name: str
+    is_short: bool
+    type: str
+    description: str
+    optional: bool = Field(default=True)
+
+class Argument(BaseModel):
+    name: str
+    type: str
+    description: str
+    optional: bool = Field(default=True)
+
+class Command(BaseModel):
+    name: str
+    command: str
+    description: str
+    args: Optional[List[Argument]]
+    flags: Optional[List[Flag]]
 
 
-class TestRunRequest(BaseModel):
-    test_file_path: Optional[str] = None
-    test_function_name: Optional[str] = None
+def load_commands(file_path: str) -> List[Command]:
+    try:
+        with open(file_path, 'r') as f:
+            data = yaml.safe_load(f)
+
+        commands = [Command(**command) for command in data['commands']]
+        return commands
+    except ValidationError as e:
+        print(f"Error in `command_config.yml` configuration file: {e}")
+        raise
 
