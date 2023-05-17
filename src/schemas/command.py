@@ -22,6 +22,11 @@ class Command(BaseModel):
     args: Optional[List[Argument]]
     flags: Optional[List[Flag]]
 
+class CommandResponseModel(BaseModel):
+    command: str
+    exit_code: int
+    output_str: str
+
 
 def load_commands(file_path: str) -> List[Command]:
     try:
