@@ -23,6 +23,8 @@ def clean_name(flag_or_arg_name: str) -> str:
     # If flag_name begins with digits, prepend 'flag_' to make it a valid Python identifier
     if flag_or_arg_name[0].isdigit():
         flag_or_arg_name = 'flag_' + flag_or_arg_name
+    if flag_or_arg_name[0] == '_':
+        flag_or_arg_name = 'flag' + flag_or_arg_name
     return flag_or_arg_name
 
 def create_router_for_command(command: Command) -> APIRouter:

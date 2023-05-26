@@ -1,6 +1,6 @@
 # LLM Repo Assistant
 
-LLM Repo Assistant provides an API for a Language Model (LLM) to interact with
+LLM Repo Assistant provides an API intended for a Language Model (LLM) to interact with
 a target code repository and dramatically increase your productivity as a developer.
 The API enables an LLM to view the directory structure, read files, write files,
 execute tests, get language-specific code summaries, and write language-specific
@@ -21,17 +21,11 @@ also create a full backup of your repo.
 
 - **File System Operations**: Perform common file system operations such as
 reading, writing, and deleting files, as well as creating and managing directories.
-- **Code Editing**: Edit code files by line number, update entire files, and
-insert new lines at specific locations.
-- **Code Understanding**: Retrieve high-level class and function signatures,
+- **Code Editing**: Retrieve high-level class and function signatures,
 get class and function definitions, and update or create new class and function definitions.
-Also read and create code documentation.
+Also read and create code documentation. (Python only)
 - **Command Line Execution**: Set up a configuration file for particular command line commands
 you want the LLM to be able to run in your repo's environment.
-
-## Supported Languages
-
-- Python
 
 ## Getting Started
 
