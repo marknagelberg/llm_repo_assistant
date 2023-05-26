@@ -167,7 +167,7 @@ def run_command_in_image(image_name: str, command: List[str]) -> Tuple[int, str]
     container = client.containers.run(image=image_name, 
                                       command=command, 
                                       detach=True,
-                                      working_dir=settings.REPO_ROOT,
+                                      #working_dir=settings.REPO_ROOT,
                                       volumes={settings.TARGET_REPO_PATH: {"bind": settings.REPO_ROOT, "mode": "rw"}})
 
     # Wait for the container to finish executing

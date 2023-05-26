@@ -26,8 +26,8 @@ insert new lines at specific locations.
 - **Code Understanding**: Retrieve high-level class and function signatures,
 get class and function definitions, and update or create new class and function definitions.
 Also read and create code documentation.
-- **Test Execution**: Run tests for your code repository using the integrated
-test execution feature (only pytest for now)
+- **Command Line Execution**: Set up a configuration file for particular command line commands
+you want the LLM to be able to run in your repo's environment.
 
 ## Supported Languages
 
@@ -42,16 +42,15 @@ To get started with LLM Repo Assistant, follow these steps:
 2. Clone the LLM Repo Assistant repo
 3. Add an `.llmignore` file to the root directory of your target repo - this tells
 LLM Repo Assistant about files in your target repo that you want ignored by the LLM.
-4. Build and run the docker container for your target repo, which installs any dependencies
-your target repo needs to run. Add the name of this container to `TARGET_REPO_DOCKER_IMAGE_NAME` in `.env`
-in the LLM Repo Assistant root directory. (i.e. `TARGET_REPO_DOCKER_IMAGE_NAME=insert-your-container-name`)
+4. Build the docker image that defines the environment for your target repo. 
 5. Navigate to the `llm_repo_assistant` cloned repository and build the
 Docker image to run LLM Repo Assistant with `docker build -t llm_repo_assistant .`
-6. Run LLM Repo Assistant locally in a docker container with the following command:
-`docker run --rm -v "/var/run/docker.sock:/var/run/docker.sock" -v "/path/to/cloned/repo/llm_repo_assistant:/app" -v "/path/to/your/code/repo:/repo" -p 8000:8000 --name llm_repo_assistant llm_repo_assistant`
-7. View and test the API endpoints by visiting `localhost:8000/docs`
+6. Create an `.env` file in the `llm_repo_assistant` root directory that follows the template
+of `.env-template`.
+7. Run LLM Repo Assistant with `make run`.
+8. View and test the API endpoints by visiting `localhost:8000/docs`
 
-### Adding ChatGPT plugin
+## Adding ChatGPT plugin
 
 To add a ChatGPT plugin to work with the API, follow these steps:
 
@@ -61,10 +60,58 @@ To add a ChatGPT plugin to work with the API, follow these steps:
 and click `Find manifest file`
 4. The plugin should now be available to use by ChatGPT
 
+## Configuring Command Endpoints
+
+Command endpoints in the FastAPI application can be dynamically configured using the `command_config.yml` file. 
+This YAML configuration file allows you to specify a variety of command line commands that the Language Learning Model (LLM) can execute.
+
+Here's the basic structure of a command configuration:
+
+```yaml
+commands:
+  - name: endpoint_name
+    command: command_name
+    description: endpoint_description
+    args:
+      - name: arg_name
+        description: arg_description
+        is_directory_or_file: true/false
+        optional: true/false
+    flags:
+      - name: flag_name
+        is_short: true/false
+        type: flag_type
+        description: flag_description
+        optional: true/false
+```
+
+### Fields
+
+Each configuration contains the following fields:
+
+-  `name`: The name of the command endpoint. This will be used in the URL route.
+-  `command`: The command line command the LLM should run.
+-  `description`: A brief explanation of what the command does.
+
+Under `args`, you can specify arguments for the command:
+
+-  `name`: The name of the argument or flag.
+-  `description`: A brief explanation of what the argument or flag does.
+-  `is_directory_or_file`: Specifies whether the argument represents a directory or file in the target repo. This ensures the file / directory is prepended with the appropriate path in the target repo docker container. Accepts `true` or `false`.
+-  `optional`: Specifies whether the argument or flag is optional. Accepts `true` or `false`.
+
+Under `flags`, you can specify  flags for the command:
+
+-  `name`: The name of the argument or flag.
+-  `description`: A brief explanation of what the argument or flag does.
+-  `is_short`: Specifies if the flag name is short (e.g., `-x`) or long (e.g., `--exclude`). Accepts true or false.
+-  `type`: The data type of the argument or flag. Can be `str` or `bool`. If `bool`, the flag does not have a value.
+-  `optional`: Specifies whether the argument or flag is optional. Accepts `true` or `false`.
+
+
 ## Future Features
 
-- Add support for different test suites
-- Add JavaScript support
+- Add support for other languages
 
 ## Contributing
 

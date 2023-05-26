@@ -11,7 +11,7 @@ class Flag(BaseModel):
 
 class Argument(BaseModel):
     name: str
-    type: str
+    is_directory_or_file: bool
     description: str
     optional: bool = Field(default=True)
 

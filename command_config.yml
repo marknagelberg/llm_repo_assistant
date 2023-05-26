@@ -1,0 +1,40 @@
+# Dynamically configure command endpoints that specify
+# which command line commands the LLM is permitted to run
+commands:
+  - name: run_tests # name will be used in url route
+    command: pytest
+    description: Run tests with pytest
+    args:
+      - name: path
+        is_directory_or_file: true
+        description: Path to the file or directory of tests to run
+        optional: true
+    flags:
+      - name: x
+        is_short: true
+        type: bool # Can be str or bool, if bool flag does not have value
+        description: Stop tests after first failure
+        optional: true
+  - name: grep
+    command: grep
+    description: Search for a pattern in files
+    args:
+      - name: pattern
+        is_directory_or_file: false
+        description: The pattern to search for
+        optional: false
+      - name: path
+        is_directory_or_file: true
+        description: Path to the file or directory to search
+        optional: true
+    flags:
+      - name: ignore-case
+        is_short: false
+        type: bool
+        description: Ignore case distinctions in the pattern and the file
+        optional: true
+      - name: recursive
+        is_short: false
+        type: bool
+        description: Recursively search directories
+        optional: false
