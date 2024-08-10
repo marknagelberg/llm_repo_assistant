@@ -10,6 +10,9 @@ It is designed to be usable as a ChatGPT plugin, allowing you do leverage the
 power of ChatGPT to edit a repo from within ChatGPT. It can of course also
 work with any LLM that is able to understand and interact with HTTP APIs.
 
+See a basic demo [here](https://x.com/MarkNagelberg/status/1652074221898723329)
+demonstrating some of LLM Repo Assistant's capabilities.
+
 ## WARNING
 
 This is in early stages of development. It provides the LLM with read
